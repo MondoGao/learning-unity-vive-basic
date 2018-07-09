@@ -2,112 +2,98 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ControllerGrabObject : MonoBehaviour {
-
-private SteamVR_TrackedObject trackedObj;
-// 1
-private GameObject collidingObject; 
-// 2
-private GameObject objectInHand; 
-
-private SteamVR_Controller.Device Controller
+public class ControllerGrabObject : MonoBehaviour
 {
-    get { return SteamVR_Controller.Input((int)trackedObj.index); }
-}
+    private SteamVR_TrackedObject trackedObj;
+    private GameObject collidingObject;
+    private GameObject objectInHand;
 
-void Awake()
-{
-    trackedObj = GetComponent<SteamVR_TrackedObject>();
-}
-	// Use this for initialization
-	private void SetCollidingObject(Collider col)
-{
-    // 1
-    if (collidingObject || !col.GetComponent<Rigidbody>())
+    private SteamVR_Controller.Device Controller
     {
-        return;
-    }
-    // 2
-    collidingObject = col.gameObject;
-}
-// 1
-public void OnTriggerEnter(Collider other)
-{
-    SetCollidingObject(other);
-}
-
-// 2
-public void OnTriggerStay(Collider other)
-{
-    SetCollidingObject(other);
-}
-
-// 3
-public void OnTriggerExit(Collider other)
-{
-    if (!collidingObject)
-    {
-        return;
+        // Get controller
+        get { return SteamVR_Controller.Input((int)trackedObj.index); }
     }
 
-    collidingObject = null;
-}
-private void GrabObject()
-{
-    // 1
-    objectInHand = collidingObject;
-    collidingObject = null;
-    // 2
-    var joint = AddFixedJoint();
-    joint.connectedBody = objectInHand.GetComponent<Rigidbody>();
-}
+    void Awake()
+    {
+        trackedObj = GetComponent<SteamVR_TrackedObject>();
+    }
+    // Use this for initialization
+    private void SetCollidingObject(Collider col)
+    {
+        if (collidingObject || !col.GetComponent<Rigidbody>())
+        {
+            return;
+        }
+        collidingObject = col.gameObject;
+    }
+    public void OnTriggerEnter(Collider other)
+    {
+        SetCollidingObject(other);
+    }
 
-// 3
-private FixedJoint AddFixedJoint()
-{
-    FixedJoint fx = gameObject.AddComponent<FixedJoint>();
-    fx.breakForce = 20000;
-    fx.breakTorque = 20000;
-    return fx;
-}
-private void ReleaseObject()
-{
-    // 1
-    if (GetComponent<FixedJoint>())
+    public void OnTriggerStay(Collider other)
     {
-        // 2
-        GetComponent<FixedJoint>().connectedBody = null;
-        Destroy(GetComponent<FixedJoint>());
-        // 3
-        objectInHand.GetComponent<Rigidbody>().velocity = Controller.velocity;
-        objectInHand.GetComponent<Rigidbody>().angularVelocity = Controller.angularVelocity;
+        SetCollidingObject(other);
     }
-    // 4
-    objectInHand = null;
-}
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-		// 1
-if (Controller.GetHairTriggerDown())
-{
-    if (collidingObject)
-    {
-        GrabObject();
-    }
-}
 
-// 2
-if (Controller.GetHairTriggerUp())
-{
-    if (objectInHand)
+    public void OnTriggerExit(Collider other)
     {
-        ReleaseObject();
+        if (!collidingObject)
+        {
+            return;
+        }
+
+        collidingObject = null;
     }
-}
-	}
+    private void GrabObject()
+    {
+        objectInHand = collidingObject;
+        collidingObject = null;
+        var joint = AddFixedJoint();
+        joint.connectedBody = objectInHand.GetComponent<Rigidbody>();
+    }
+
+    private FixedJoint AddFixedJoint()
+    {
+        FixedJoint fx = gameObject.AddComponent<FixedJoint>();
+        fx.breakForce = 20000;
+        fx.breakTorque = 20000;
+        return fx;
+    }
+    private void ReleaseObject()
+    {
+        if (GetComponent<FixedJoint>())
+        {
+            GetComponent<FixedJoint>().connectedBody = null;
+            Destroy(GetComponent<FixedJoint>());
+            objectInHand.GetComponent<Rigidbody>().velocity = Controller.velocity;
+            objectInHand.GetComponent<Rigidbody>().angularVelocity = Controller.angularVelocity;
+        }
+        objectInHand = null;
+    }
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Controller.GetHairTriggerDown())
+        {
+            if (collidingObject)
+            {
+                GrabObject();
+            }
+        }
+
+        if (Controller.GetHairTriggerUp())
+        {
+            if (objectInHand)
+            {
+                ReleaseObject();
+            }
+        }
+    }
 }
